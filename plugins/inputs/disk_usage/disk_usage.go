@@ -24,7 +24,9 @@ var sampleConfig = `
   # paths = ["/", "/home"]
 
   ## Ignore mount points by filesystem type.
-  # ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"]
+  ## Extended the default ignore list to also exclude 'proc' and 'sysfs' which
+  ## tend to show up as noise on Linux systems.
+  # ignore_fs = ["tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs", "proc", "sysfs"]
 `
 
 // Description returns a short description of the plugin.
@@ -74,6 +76,11 @@ func (d *DiskUsage) Gather(acc telegraf.Accumulator) error {
 			usedPercent = float64(used) / float64(total) * 100.0
 		}
 
+		// Skip mount points with zero total size to avoid reporting phantom entries.
+		if total == 0 {
+			continue
+		}
+
 		tags := map[string]string{
 			"path":   path,
 			"fstype": fsType,
@@ -104,14 +111,4 @@ func getDiskStat(path string) (*syscall.Statfs_t, string, error) {
 
 // getMountPoints returns a list of currently active mount points.
 func getMountPoints() ([]string, error) {
-	// Default to common mount points if enumeration is not available.
-	return []string{"/"}, nil
-}
-
-func init() {
-	inputs.Add("disk_usage", func() telegraf.Input {
-		return &DiskUsage{
-			IgnoreFS: []string{"tmpfs", "devtmpfs", "devfs", "iso9660", "overlay", "aufs", "squashfs"},
-		}
-	})
-}
+	// Default to common mount points if enumeration is no
