@@ -44,6 +44,7 @@ func (pm *ProcessMonitor) Gather(acc telegraf.Accumulator) error {
 func (pm *ProcessMonitor) gatherProcess(acc telegraf.Accumulator, name string) error {
 	out, err := exec.Command("pgrep", "-x", name).Output()
 	if err != nil {
+		// Process not found - report it as not running but don't treat as an error
 		acc.AddFields("process_monitor",
 			map[string]interface{}{"running": 0},
 			map[string]string{"process": name},
@@ -65,12 +66,21 @@ func (pm *ProcessMonitor) gatherProcess(acc telegraf.Accumulator, name string) e
 		totalMem += mem
 	}
 
+	// Calculate per-process averages when multiple PIDs are found
+	var avgCPU, avgMem float64
+	if count > 0 {
+		avgCPU = totalCPU / float64(count)
+		avgMem = totalMem / float64(count)
+	}
+
 	acc.AddFields("process_monitor",
 		map[string]interface{}{
-			"running":    1,
-			"pid_count":  count,
-			"cpu_usage":  totalCPU,
-			"mem_usage":  totalMem,
+			"running":   1,
+			"pid_count": count,
+			"cpu_usage": totalCPU,
+			"mem_usage": totalMem,
+			"avg_cpu":   avgCPU,
+			"avg_mem":   avgMem,
 		},
 		map[string]string{"process": name},
 		time.Now(),
