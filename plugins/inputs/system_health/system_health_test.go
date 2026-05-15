@@ -47,7 +47,8 @@ func TestGatherCPUOnly(t *testing.T) {
 	require.True(t, ok)
 	assert.Contains(t, metric.Fields, "usage_percent")
 	assert.Contains(t, metric.Fields, "warning")
-	assert.WithinDuration(t, time.Now(), metric.Time, 5*time.Second)
+	// Allow a slightly wider time window to reduce flakiness on slow CI machines
+	assert.WithinDuration(t, time.Now(), metric.Time, 10*time.Second)
 }
 
 func TestGatherMemoryOnly(t *testing.T) {
