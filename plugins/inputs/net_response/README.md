@@ -1,69 +1,36 @@
-# Network Response Input Plugin
+# Net Response Input Plugin
 
-This plugin tests UDP/TCP connection and produces metrics from the result, the
-response time and optionally verifies text in the response.
-
-⭐ Telegraf v0.10.3
-🏷️ network
-💻 all
-
-## Global configuration options <!-- @/docs/includes/plugin_config.md -->
-
-Plugins support additional global and plugin configuration settings for tasks
-such as modifying metrics, tags, and fields, creating aliases, and configuring
-plugin ordering. See [CONFIGURATION.md][CONFIGURATION.md] for more details.
-
-[CONFIGURATION.md]: ../../../docs/CONFIGURATION.md#plugins
+The `net_response` plugin checks network connectivity to a given address and port.
+It measures the response time and reports whether the connection succeeded.
 
 ## Configuration
 
-```toml @sample.conf
-# Collect response time of a TCP or UDP connection
+```toml
 [[inputs.net_response]]
-  ## Protocol, must be "tcp" or "udp"
-  ## NOTE: because the "udp" protocol does not respond to requests, it requires
-  ## a send/expect string pair (see below).
+  ## Protocol to check (tcp or udp)
   protocol = "tcp"
-  ## Server address (default localhost)
+
+  ## Address and port to check
   address = "localhost:80"
 
-  ## Set timeout
-  # timeout = "1s"
-
-  ## Set read timeout (only used if expecting a response)
-  # read_timeout = "1s"
-
-  ## The following options are required for UDP checks. For TCP, they are
-  ## optional. The plugin will send the given string to the server and then
-  ## expect to receive the given 'expect' string back.
-  ## string sent to the server
-  # send = "ssh"
-  ## expected string in answer
-  # expect = "ssh"
-
-  ## Uncomment to remove deprecated fields; recommended for new deploys
-  # fieldexclude = ["result_type", "string_found"]
+  ## Timeout for the connection
+  timeout = "1s"
 ```
 
 ## Metrics
 
-- net_response
+- `net_response`
   - tags:
-    - server
-    - port
-    - protocol
-    - result
+    - `protocol` — the protocol used (`tcp` or `udp`)
+    - `address` — the target address and port
   - fields:
-    - response_time (float, seconds)
-    - result_code (int) success = 0, timeout = 1, connection_failed = 2,
-                        read_failed = 3, string_mismatch = 4
-    - result_type (string) **DEPRECATED in 1.7; use result tag**
-    - string_found (boolean) **DEPRECATED in 1.4; use result tag**
+    - `response_time` (float) — time in seconds to establish the connection
+    - `result_code` (int) — `0` for success, `1` for failure
+    - `result` (string) — `"success"` or an error message
 
 ## Example Output
 
-```text
-net_response,port=8086,protocol=tcp,result=success,server=localhost response_time=0.000092948,result_code=0i,result_type="success" 1525820185000000000
-net_response,port=8080,protocol=tcp,result=connection_failed,server=localhost result_code=2i,result_type="connection_failed" 1525820088000000000
-net_response,port=8080,protocol=udp,result=read_failed,server=localhost result_code=3i,result_type="read_failed",string_found=false 1525820088000000000
+```
+net_response,address=localhost:80,protocol=tcp response_time=0.001234,result="success",result_code=0i
+net_response,address=localhost:9999,protocol=tcp response_time=0.500123,result="error: connection refused",result_code=1i
 ```
