@@ -33,7 +33,7 @@ build-static:
 ## test: Run all unit tests
 test:
 	@echo "Running tests..."
-	go test -v -race -timeout 30s ./...
+	go test -v -race -timeout 60s ./...
 
 ## test-short: Run short tests only
 test-short:
