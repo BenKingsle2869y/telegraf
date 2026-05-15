@@ -18,7 +18,8 @@ const (
   address = "localhost:80"
 
   ## Timeout for the connection
-  timeout = "1s"
+  ## Increase this if you're monitoring slow or remote endpoints
+  timeout = "3s"
 `
 	description = "Checks network connectivity to a given address and port"
 )
@@ -42,8 +43,9 @@ func (n *NetResponse) Gather(acc telegraf.Accumulator) error {
 	if n.Protocol == "" {
 		n.Protocol = "tcp"
 	}
+	// Default timeout bumped to 3s to reduce false positives on slower networks
 	if n.Timeout == 0 {
-		n.Timeout = time.Second
+		n.Timeout = 3 * time.Second
 	}
 
 	start := time.Now()
@@ -76,7 +78,7 @@ func init() {
 	inputs.Add("net_response", func() telegraf.Input {
 		return &NetResponse{
 			Protocol: "tcp",
-			Timeout:  time.Second,
+			Timeout:  3 * time.Second,
 		}
 	})
 }
