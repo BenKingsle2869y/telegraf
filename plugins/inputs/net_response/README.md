@@ -14,7 +14,8 @@ It measures the response time and reports whether the connection succeeded.
   address = "localhost:80"
 
   ## Timeout for the connection
-  timeout = "1s"
+  ## Increase this if you're monitoring hosts across a slow or high-latency network
+  timeout = "2s"
 ```
 
 ## Metrics
